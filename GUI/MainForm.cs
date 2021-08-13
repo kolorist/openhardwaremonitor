@@ -23,6 +23,7 @@ using Aga.Controls.Tree.NodeControls;
 using OpenHardwareMonitor.Hardware;
 using OpenHardwareMonitor.WMI;
 using OpenHardwareMonitor.Utilities;
+using OpenHardwareMonitor.MM;
 
 namespace OpenHardwareMonitor.GUI {
   public partial class MainForm : Form {
@@ -62,6 +63,7 @@ namespace OpenHardwareMonitor.GUI {
     private UserOption showGadget;
     private UserRadioGroup plotLocation;
     private WmiProvider wmiProvider;
+    private MmProvider mmProvider;
 
     private UserOption runWebServer;
     private HttpServer server;
@@ -156,7 +158,9 @@ namespace OpenHardwareMonitor.GUI {
         gadget = new SensorGadget(computer, settings, unitManager);
         gadget.HideShowCommand += hideShowClick;
 
-        wmiProvider = new WmiProvider(computer);
+        //wmiProvider = new WmiProvider(computer);
+        wmiProvider = null;
+        mmProvider = new MmProvider(computer);
       }
 
       logger = new Logger(computer);
@@ -584,6 +588,9 @@ namespace OpenHardwareMonitor.GUI {
       if (wmiProvider != null)
         wmiProvider.Update();
 
+      if (mmProvider != null)
+        mmProvider.Update();
+
 
       if (logSensors != null && logSensors.Value && delayCount >= 4)
         logger.Log();
@@ -655,7 +662,11 @@ namespace OpenHardwareMonitor.GUI {
     private void MainForm_FormClosed(object sender, FormClosedEventArgs e) {
       Visible = false;      
       systemTray.IsMainIconEnabled = false;
-      timer.Enabled = false;            
+      timer.Enabled = false;
+      if (wmiProvider != null)
+        wmiProvider.Dispose();
+      if (mmProvider != null)
+        mmProvider.Dispose();
       computer.Close();
       SaveConfiguration();
       if (runWebServer.Value)
